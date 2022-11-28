@@ -1,0 +1,47 @@
+---
+title: "EVs and local air quality"
+author: "Erica Bishop"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(here)
+library(janitor)
+library(lubridate)
+
+```
+
+
+```{r}
+
+#read in EV data and format dates
+co_evs <- read_csv("/Users/ericabishop/Documents/MEDS-fall-classwork/EDS222-stats/final_project/data/co_ev_registrations_public.csv") |> 
+  janitor::clean_names() 
+
+#format dates
+co_evs <- co_evs |> 
+  mutate(as_date(registration_valid_date))
+
+```
+EV data: 
+- zip codes are a hot mess (multiple different formats / lengths?)
+- over 1300 unique zips (should be no more than 500 or so)
+
+```{r}
+
+class(co_evs$registration_valid_date)
+
+
+```
+
+
+
+
+
+
