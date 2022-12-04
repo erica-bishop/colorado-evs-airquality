@@ -91,6 +91,9 @@ daqi_22_CO <- filter_CO(daily_aqi_raw_22)
 #join using rbind
 daqi_CO <- rbind(daqi_10_CO, daqi_11_CO, daqi_12_CO, daqi_13_CO, daqi_14_CO, daqi_15_CO, daqi_16_CO, daqi_17_CO, daqi_18_CO, daqi_19_CO, daqi_20_CO, daqi_21_CO, daqi_22_CO)
 
+daqi_CO <- daqi_CO |> 
+  rename(date_local = date) #renaming in case joining to ozone data
+
 ```
 
 ```{r}
@@ -128,9 +131,53 @@ dozo_22_CO <- filter_CO(daily_ozone_2022)
 #combine into one df with rbind
 dozo_CO <- rbind(dozo_10_CO, dozo_11_CO, dozo_12_CO, dozo_13_CO, dozo_14_CO, dozo_15_CO, dozo_16_CO, dozo_17_CO, dozo_18_CO, dozo_19_CO, dozo_20_CO, dozo_21_CO)
 
+```
+
+```{r}
+
+#read in county data, drop state column
+co_counties <- read_csv(file.path(datadir, "CO_counties.csv")) |> 
+  clean_names() |> 
+  select("county", "zip_code")
+
+#attach county names associated with zip code to co_evs
+co_evs_counties <- left_join(co_evs, co_counties, by = "zip_code")
 
 
 ```
+
+
+
+Selecting variables of interest and joining by county (rather than zip codes becasue those are a bit of a mess)
+
+```{r}
+#manipulate variables of interest into one DF - BY COUNTY
+
+#just using ozone data for now
+
+#select columns of interest from aqi into new DF
+
+
+
+
+#select columns of interest from ozone into new DF
+
+
+
+#select columns of interest from EVs into new DF
+
+
+
+
+#combine into one DF for analysis
+
+
+
+```
+
+
+
+
 
 
 ### Part 1: Look for a model - is there a relationship between any of the variables?
