@@ -14,7 +14,10 @@ library(tidyverse)
 library(here)
 library(janitor)
 library(lubridate)
-library(datapasta)
+#library(datapasta)
+library(zoo)
+library(ggpubr)
+library(gridExtra)
 
 ```
 
@@ -143,9 +146,16 @@ co_counties <- read_csv(file.path(datadir, "CO_counties.csv")) |>
 #attach county names associated with zip code to co_evs
 co_evs_counties <- left_join(co_evs, co_counties, by = "zip_code")
 
+#rename date column to join
+co_evs_counties <- co_evs_counties |> 
+  rename(date_local = registration_valid_date)
+
+#join ev and ozone data
+co_evs_ozone <- full_join(dozo_CO, co_evs_counties, by = "date_local")
+#DON"T USE THAT DF ITS GARBAGE
+
 
 ```
-
 
 
 Selecting variables of interest and joining by county (rather than zip codes becasue those are a bit of a mess)
@@ -153,31 +163,66 @@ Selecting variables of interest and joining by county (rather than zip codes bec
 ```{r}
 #manipulate variables of interest into one DF - BY COUNTY
 
-#just using ozone data for now
-
-#select columns of interest from aqi into new DF
-
-
-
-
-#select columns of interest from ozone into new DF
-
-
-
 #select columns of interest from EVs into new DF
+evs_clean <- co_evs_counties |> 
+  select("county", "date_local", "zip_code") |> 
+  mutate(my_date = as.yearmon(date_local))
+  
+#just using ozone data for now
+#select columns of interest from ozone into new DF
+ozone_clean <- dozo_CO |> 
+  select("date_local", "units_of_measure", "parameter_name", "aqi", "county_name", "local_site_name", "x1st_max_value", "x1st_max_hour", "arithmetic_mean") |> 
+  mutate(my_date = as.yearmon(date_local))
+
+```
+
+Run some summary statistics to get an idea of what each variable of interest looks like: 
+```{r}
+
+evs_summary <- evs_clean |> 
+  group_by(my_date) |> 
+  summarize(ev_reg_count = n())
 
 
+ozone_summary <- ozone_clean |> 
+  group_by(my_date) |> 
+  summarize(monthly_ozone_avg_ppm = mean(arithmetic_mean))
 
+#combine summary tables and include cumulative registration
 
-#combine into one DF for analysis
+my_summary <- left_join(evs_summary, ozone_summary, by  = "my_date") |> 
+  mutate(cum_evreg_since2010 = cumsum(ev_reg_count))
 
 
 
 ```
+Data exploration:
 
+```{r}
+ev_plot <- ggplot(data = my_summary,
+       aes(x = my_date,
+           y = cum_evreg_since2010)) +
+  geom_line()
 
+oz_plot <- ggplot(data = my_summary,
+       aes(x = my_date,
+           y = monthly_ozone_avg_ppm)) +
+  geom_point()
 
+grid.arrange()
 
+# ggplot(data = my_summary) +
+#   geom_line(aes(x = my_date,
+#                 y = cum_evreg_since2010)) +
+#   geom_point(aes(x = my_date,
+#                  y = monthly_ozone_avg_ppm))
+
+# grid.arrange(ev_plot + oz_plot, ncol = 2)
+
+ev_plot
+oz_plot
+
+```
 
 
 ### Part 1: Look for a model - is there a relationship between any of the variables?
@@ -185,6 +230,9 @@ Selecting variables of interest and joining by county (rather than zip codes bec
 - find correlation
 - find covariance
 - scatter plot
+
+
+
 
 ### Part 2: Build a model
 
