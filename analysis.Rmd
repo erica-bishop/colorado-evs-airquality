@@ -41,10 +41,12 @@ co_evs <- co_evs |>
          registration_expiration_date = lubridate::mdy(registration_expiration_date))
 
 ```
-EV data: 
+EV data: downloaded from https://www.atlasevhub.com/materials/state-ev-registration-data/#data
 - zip codes are a hot mess (multiple different formats / lengths?)
 - over 1300 unique zips (should be no more than 500 or so)
 - date range: January 2010 - July 2022
+- includes fuel cell, plug in hybrid, and EV
+- NOT using cumulative counts becuase this dataset includes original registrations and renewals without distinction, so according the the recommendations from the data source, treating like a snapshot in time
 
 Air Quality data from the EPA's Air Data: https://www.epa.gov/outdoor-air-quality-data
 - from https://aqs.epa.gov/aqsweb/airdata/download_files.html
@@ -141,6 +143,16 @@ dozo_CO <- rbind(dozo_10_CO, dozo_11_CO, dozo_12_CO, dozo_13_CO, dozo_14_CO, doz
 ```
 
 ```{r}
+#remove precursor datasets from memory to free up space
+# rm(dozo_10_CO, dozo_11_CO, dozo_12_CO, dozo_13_CO, dozo_14_CO, dozo_15_CO, dozo_16_CO, dozo_17_CO, dozo_18_CO, dozo_19_CO, dozo_20_CO, dozo_21_CO)
+# rm(daqi_10_CO, daqi_11_CO, daqi_12_CO, daqi_13_CO, daqi_14_CO, daqi_15_CO, daqi_16_CO, daqi_17_CO, daqi_18_CO, daqi_19_CO, daqi_20_CO, daqi_21_CO, daqi_22_CO)
+# rm(daily_aqi_raw_10, daily_aqi_raw_11, daily_aqi_raw_12, daily_aqi_raw_13, daily_aqi_raw_14, daily_aqi_raw_15, daily_aqi_raw_16, daily_aqi_raw_17, daily_aqi_raw_18, daily_aqi_raw_19, daily_aqi_raw_20, daily_aqi_raw_21, daily_aqi_raw_22)
+#rm(daily_ozone_2010, daily_ozone_2011, daily_ozone_2012, daily_ozone_2013, daily_ozone_2014, daily_ozone_2015, daily_ozone_2016, daily_ozone_2017, daily_ozone_2018, daily_ozone_2019, daily_ozone_2020, daily_ozone_2021, daily_ozone_2022)
+
+```
+
+
+```{r}
 
 #read in county data, drop state column
 co_counties <- read_csv(file.path(datadir, "CO_counties.csv")) |> 
@@ -176,7 +188,8 @@ evs_clean <- co_evs_counties |>
 #select columns of interest from ozone into new DF
 ozone_clean <- dozo_CO |> 
   select("date_local", "units_of_measure", "parameter_name", "aqi", "county_name", "local_site_name", "x1st_max_value", "x1st_max_hour", "arithmetic_mean") |> 
-  mutate(my_date = as.yearmon(date_local))
+  mutate(my_date = as.yearmon(date_local)) |> 
+  rename(county = county_name)
 
 ```
 
@@ -194,8 +207,36 @@ ozone_summary <- ozone_clean |>
 
 #combine summary tables and include cumulative registration
 
-my_summary <- left_join(evs_summary, ozone_summary, by  = "my_date") |> 
-  mutate(cum_evreg_since2010 = cumsum(ev_reg_count))
+my_summary <- left_join(evs_summary, ozone_summary, by  = "my_date") #|> 
+#   mutate(cum_evreg_since2010 = cumsum(ev_reg_count))
+
+
+#create a table that retains county data??? maybe filter to just Denver
+
+#den_summary <- left_join(ozone_clean, evs_clean, by = "county")
+
+#still doesn't really make sense to have ev reg and ozone observations in the same df...
+```
+
+Try out using the county summary to maybe look at just a few counties
+Top 5 most populous counties in Colorado (in order): El Paso (Colorado SPrings), Denver, Arapahoe, Jefferson, Adams (all with populations over 500k)
+```{r}
+#try a county summary
+
+ev_sum_counties <- evs_clean |> 
+  group_by(county, my_date) |> 
+  summarise(ev_reg = n())
+
+ozone_sum_counties <- ozone_clean |> 
+  group_by(county, my_date) |> 
+  summarise(avg_oz = mean(arithmetic_mean))
+
+
+county_sum <- left_join(ev_sum_counties, ozone_summary)
+
+topcounties <- county_sum |> 
+  filter(county %in% c("El Paso County", "Denver County", "Arapahoe County", "Jefferson County", "Adams Counties"))
+
 
 ```
 Data exploration:
@@ -203,7 +244,7 @@ Data exploration:
 ```{r}
 ev_plot <- ggplot(data = my_summary,
        aes(x = my_date,
-           y = cum_evreg_since2010)) +
+           y = ev_reg_count)) +
   geom_line()
 
 oz_plot <- ggplot(data = my_summary,
@@ -213,16 +254,24 @@ oz_plot <- ggplot(data = my_summary,
 
 
 
-# ggplot(data = my_summary) +
-#   geom_line(aes(x = my_date,
-#                 y = cum_evreg_since2010)) +
-#   geom_point(aes(x = my_date,
-#                  y = monthly_ozone_avg_ppm))
-
-# grid.arrange(ev_plot + oz_plot, ncol = 2)
-
 ev_plot
 oz_plot
+
+oz_ev_plot <- ggplot(data = my_summary,
+                     aes(x = ev_reg_count,
+                         y = monthly_ozone_avg_ppm)) +
+  geom_point()
+
+oz_ev_plot
+
+
+counties_plot <- ggplot(data = topcounties,
+                        aes(x = ev_reg,
+                            y = monthly_ozone_avg_ppm,
+                            col = county)) +
+  geom_point()
+
+counties_plot
 
 ```
 
@@ -234,10 +283,6 @@ oz_plot
 
 ```{r}
 #investigate correlation
-cor(my_summary$cum_evreg_since2010, my_summary$monthly_ozone_avg_ppm, use = "complete.obs") #ignore NAs with complete obs
-#ver low positive correlation! But push onwards
-
-#try correlating with monthly EV regs not cumulative
 cor(my_summary$ev_reg_count, my_summary$monthly_ozone_avg_ppm, use = "complete.obs")
 #ver small negative correlation
 
@@ -254,36 +299,55 @@ $$D_t = S_t + T_t + R_t$$
 #   select("x1st_max_value", "date_local") |> 
 #   as_tsibble(index = date_local, key = )
 
-ozone_ts <- my_summary |> 
-  select(my_date, monthly_ozone_avg_ppm) |> 
-  as_tsibble(index = yearmonth(my_date))
 
-ozone_ts <- my_summary |> 
+ozone_ts <- as_tibble(my_summary) |> 
+  select("my_date", "monthly_ozone_avg_ppm") |> 
   mutate(my_date = yearmonth(my_date)) |> 
-  as_tsibble(my_summary)
-
+  as_tsibble()  #key = monthly_ozone_avg_ppm, index = my_date) #for some reason decomp doesn't work with these arguments specified
+ 
 # esales <- arrow::read_feather("data/esales.feather")
 # esales %>%
 #   dplyr::select(date, sales_GWh = value) -> esales_tbl
 # esales_tbl %>% as_tsibble(index = date) -> elsales_tbl_ts
 
 
-decomp <- as_tsibble(ozone_ts) |> 
+ozone_decomp <- as_tsibble(ozone_ts) |> 
   model(
-    classical_decomposition(value, type = "additive")
+    classical_decomposition(monthly_ozone_avg_ppm, type = "additive")
   ) |> 
   components() |> 
   autoplot() +
   labs(title = "Classical additive decomposition of monthly ozone")
 
-decomp
+ozone_decomp
 
+```
 
+From the above time series analysis, its clear that seasonal variations and even random variations account for most of the ozone pollutio, the long run trend is very weak. 
 
+Take a look at a decomposition of ev registrations to see if there is any similar pattern, or perhaps we can 
+
+```{r}
+
+ev_ts <- as_tibble(my_summary) |> 
+  select("my_date", "ev_reg_count") |> 
+  mutate(my_date = yearmonth(my_date)) |> 
+  as_tsibble()
+
+ev_decomp <- ev_ts |> 
+  model(
+    classical_decomposition(ev_reg_count, type = "additive")
+  ) |> 
+  components() |> 
+  autoplot() +
+  labs(title = "Classical additive decomposition of ev registrations")
+
+ev_decomp
 
 ```
 
 
+Now to examine the relationship between these variables:
 
 
 Run a simple linear regression model: 
@@ -293,9 +357,24 @@ $$\text{monthly_ozone_avg_ppm} = \beta_0 + \beta_1 \text{cum_evreg_since2010} + 
 ```{r}
 #regress ozone days on ev registration
 
+mod <- lm(monthly_ozone_avg_ppm ~ ev_reg_count, data = my_summary)
+
+print(summary(mod))
 
 #plot the model
+ggplot(data = my_summary,
+       aes(x = ev_reg_count,
+           y = monthly_ozone_avg_ppm)) +
+  geom_point() +
+  geom_line(data = augment(mod),
+            aes(y = .fitted)) +
+  labs(x = "Monthly EV Registrations in Colorado",
+       y = "Monthly average ozone (ppm)")
 
+```
+
+Does the county play a role at all? (not sure it even makes sense to run an interaction model, but perhaps just looking at the top counties individually)
+```{r}
 
 
 
@@ -315,6 +394,8 @@ Null Hypothesis: beta_1 (slope) = 0 (no relationship between ozone and # of EVs)
 Alternate Hypothesis: beta_1 != 0 (or is negative?)
 
 ```{r}
+
+
 
 
 
