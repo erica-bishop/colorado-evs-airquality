@@ -22,6 +22,7 @@ library(gt)
 library(modelr)
 library(feasts)
 library(tsibble)
+library(webshot2)
 
 ```
 
@@ -29,7 +30,7 @@ library(tsibble)
 ```{r}
 #set up data directory
 datadir <- ("/Users/ericabishop/Documents/MEDS-fall-classwork/EDS222-stats/final_project/data")
-
+figdir <- ("/Users/ericabishop/Documents/MEDS-fall-classwork/EDS222-stats/final_project/figs")#to save outputs to
 
 #read in EV data and format dates
 co_evs <- read_csv(file.path(datadir, "co_ev_registrations_public.csv")) |> 
@@ -346,6 +347,26 @@ ev_decomp
 
 ```
 
+Run a time series decomposition with both?
+
+```{r}
+
+# ev_oz_ts <- left_join(ev_ts, ozone_ts, by = "my_date")
+# 
+# ev_oz_decomp <- ev_oz_ts |> 
+#   model(
+#     classical_decomposition(c(ev_reg_count, monthly_ozone_avg_ppm), type = "additive")
+#   ) |> 
+#   components() |> 
+#   autoplot() +
+#   labs(title = "Additive Decomp of EV registrations and ozone in CO")
+# 
+# 
+
+
+```
+
+
 
 Now to examine the relationship between these variables:
 
@@ -376,10 +397,85 @@ ggplot(data = my_summary,
 Does the county play a role at all? (not sure it even makes sense to run an interaction model, but perhaps just looking at the top counties individually)
 ```{r}
 
+#Look for correlatons in each of these 
+
+#El Paso County
+elpaso <- county_sum |> 
+  filter(county %in% "El Paso County")
+
+elpaso_cor <- cor(elpaso$ev_reg, elpaso$monthly_ozone_avg_ppm, use = "complete.obs")
+#super weak
+
+#Denver County
+denver <- county_sum |> 
+  filter(county %in% "Denver County")
+
+denver_cor <- cor(denver$ev_reg, denver$monthly_ozone_avg_ppm, use = "complete.obs")
+denver_cor #somehow even weaker
+
+#Arapahoe
+arapahoe <- county_sum |> 
+  filter(county %in% "Arapahoe County")
+arapahoe_cor <- cor(arapahoe$ev_reg, arapahoe$monthly_ozone_avg_ppm, use = "complete.obs")
+arapahoe_cor
+#weak negative
+
+#Jefferson
+jefferson <- county_sum |> 
+  filter(county %in% "Jefferson County")
+jeff_cor <- cor(jefferson$ev_reg, jefferson$monthly_ozone_avg_ppm, use = "complete.obs")
+jeff_cor
+#weak negative
+
+#Adams
+adams <- county_sum |> 
+  filter(county %in% "Adams County")
+adams_cor <- cor(adams$ev_reg, adams$monthly_ozone_avg_ppm, use = "complete.obs")
+adams_cor
+#weak positive
+
+#create a nice little output table:
+cor_table <- data.frame("County" = c("El Paso", "Denver", "Arapahoe", "Jefferson", "Adams"),
+                        "Correlation" = c(round(elpaso_cor, 4), round(denver_cor, 4), round(arapahoe_cor, 4), round(jeff_cor, 4), round(adams_cor, 4)))
+
+cor_gt <- gt(cor_table) |> 
+  tab_header("Pearson Correlation Coefficients")
+
+gtsave(cor_gt, "county_ev_cor_table.png", path = datadir)
+
+```
+
+Arapahoe and Jefferson had the strongest (albeit still *very* weak) correlations, so I'll build a linear model for them:
+
+
+```{r}
+
+
+#regress ozone days on ev registration for Arapahoe County
+
+mod <- lm(monthly_ozone_avg_ppm ~ ev_reg_count, data = my_summary)
+
+print(summary(mod))
+
+#plot the model
+ggplot(data = my_summary,
+       aes(x = ev_reg_count,
+           y = monthly_ozone_avg_ppm)) +
+  geom_point() +
+  geom_line(data = augment(mod),
+            aes(y = .fitted)) +
+  labs(x = "Monthly EV Registrations in Colorado",
+       y = "Monthly average ozone (ppm)")
+
+
+
+
 
 
 
 ```
+
+
 
 
 ###
@@ -394,6 +490,8 @@ Null Hypothesis: beta_1 (slope) = 0 (no relationship between ozone and # of EVs)
 Alternate Hypothesis: beta_1 != 0 (or is negative?)
 
 ```{r}
+
+
 
 
 
