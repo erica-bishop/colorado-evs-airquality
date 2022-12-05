@@ -18,6 +18,10 @@ library(lubridate)
 library(zoo)
 library(ggpubr)
 library(gridExtra)
+library(gt)
+library(modelr)
+library(feasts)
+library(tsibble)
 
 ```
 
@@ -193,8 +197,6 @@ ozone_summary <- ozone_clean |>
 my_summary <- left_join(evs_summary, ozone_summary, by  = "my_date") |> 
   mutate(cum_evreg_since2010 = cumsum(ev_reg_count))
 
-
-
 ```
 Data exploration:
 
@@ -207,9 +209,9 @@ ev_plot <- ggplot(data = my_summary,
 oz_plot <- ggplot(data = my_summary,
        aes(x = my_date,
            y = monthly_ozone_avg_ppm)) +
-  geom_point()
+  geom_line()
 
-grid.arrange()
+
 
 # ggplot(data = my_summary) +
 #   geom_line(aes(x = my_date,
@@ -224,23 +226,110 @@ oz_plot
 
 ```
 
-
 ### Part 1: Look for a model - is there a relationship between any of the variables?
 
 - find correlation
 - find covariance
 - scatter plot
 
+```{r}
+#investigate correlation
+cor(my_summary$cum_evreg_since2010, my_summary$monthly_ozone_avg_ppm, use = "complete.obs") #ignore NAs with complete obs
+#ver low positive correlation! But push onwards
+
+#try correlating with monthly EV regs not cumulative
+cor(my_summary$ev_reg_count, my_summary$monthly_ozone_avg_ppm, use = "complete.obs")
+#ver small negative correlation
+
+```
+
+Maybe there is a long-term trend in the time-series data of the ozone data - try running a classical decomposition to see if there's a long-term trend
+
+To recover seasonality separately from the long run trend, we will use a classical decomposition. That is, we wish to decompose total deaths $D_t$ into a trend component $T_t$, a seasonal component $S_t$, and a random component $R_t$. We will assume an additive model describes our data, as we don't see evidence in the above plot that the magnitude of seasonality is changing over time:
+
+$$D_t = S_t + T_t + R_t$$
+
+```{r}
+# ozone_ts <- dozo_CO |> 
+#   select("x1st_max_value", "date_local") |> 
+#   as_tsibble(index = date_local, key = )
+
+ozone_ts <- my_summary |> 
+  select(my_date, monthly_ozone_avg_ppm) |> 
+  as_tsibble(index = yearmonth(my_date))
+
+ozone_ts <- my_summary |> 
+  mutate(my_date = yearmonth(my_date)) |> 
+  as_tsibble(my_summary)
+
+# esales <- arrow::read_feather("data/esales.feather")
+# esales %>%
+#   dplyr::select(date, sales_GWh = value) -> esales_tbl
+# esales_tbl %>% as_tsibble(index = date) -> elsales_tbl_ts
+
+
+decomp <- as_tsibble(ozone_ts) |> 
+  model(
+    classical_decomposition(value, type = "additive")
+  ) |> 
+  components() |> 
+  autoplot() +
+  labs(title = "Classical additive decomposition of monthly ozone")
+
+decomp
 
 
 
-### Part 2: Build a model
+
+```
 
 
-### Part 3: Test Hypothesis
+
+
+Run a simple linear regression model: 
+$$\text{monthly_ozone_avg_ppm} = \beta_0 + \beta_1 \text{cum_evreg_since2010} + \epsilon$$
+
+
+```{r}
+#regress ozone days on ev registration
+
+
+#plot the model
+
+
+
+
+
+```
+
+
+###
+
+IF there's nothing significant, try looking at the number of ozone action alert days to see if there's a correlation:
+https://docs.google.com/spreadsheets/d/1BHUei0iDaE2EvSIrD4KAN9xy9mQQWhLDAgZtA1iFSl4/edit#gid=1498430605 
+
+
+### Part 2: Test Hypothesis
 
 Null Hypothesis: beta_1 (slope) = 0 (no relationship between ozone and # of EVs)
 Alternate Hypothesis: beta_1 != 0 (or is negative?)
+
+```{r}
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
 
 
 
