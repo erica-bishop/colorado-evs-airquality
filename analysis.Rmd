@@ -25,6 +25,10 @@ library(tsibble)
 library(webshot2)
 
 ```
+Background info:
+
+- health threshhold for ozone is 70 ppb (0.070 ppm)
+
 
 
 ```{r}
@@ -374,7 +378,6 @@ Now to examine the relationship between these variables:
 Run a simple linear regression model: 
 $$\text{monthly_ozone_avg_ppm} = \beta_0 + \beta_1 \text{cum_evreg_since2010} + \epsilon$$
 
-
 ```{r}
 #regress ozone days on ev registration
 
@@ -449,32 +452,98 @@ Arapahoe and Jefferson had the strongest (albeit still *very* weak) correlations
 
 
 ```{r}
+##First look at fit with all counties
 
+countymod <- lm(monthly_ozone_avg_ppm~ev_reg, data = topcounties)
+
+
+countiesmod_plot <- ggplot(data = topcounties,
+                        aes(x = ev_reg,
+                            y = monthly_ozone_avg_ppm
+                            )) +
+  geom_point() +
+  geom_line(data = augment(countymod),
+            aes(y = .fitted)) +
+  labs(X = "Monthly EV Registrations",
+       Y = "Monthly Average Ozone Concentration (ppm)")
+
+countiesmod_plot
+
+##### ARAPAHOE
 
 #regress ozone days on ev registration for Arapahoe County
 
-mod <- lm(monthly_ozone_avg_ppm ~ ev_reg_count, data = my_summary)
+arapahoe_mod <- lm(monthly_ozone_avg_ppm ~ ev_reg, data = arapahoe)
 
-print(summary(mod))
+print(summary(arapahoe_mod))
 
 #plot the model
-ggplot(data = my_summary,
-       aes(x = ev_reg_count,
+arapahaoemod_plot <- ggplot(data = arapahoe_mod,
+       aes(x = ev_reg,
            y = monthly_ozone_avg_ppm)) +
   geom_point() +
-  geom_line(data = augment(mod),
+  geom_line(data = augment(arapahoe_mod),
             aes(y = .fitted)) +
-  labs(x = "Monthly EV Registrations in Colorado",
+  labs(x = "Monthly EV Registrations in Arapahoe County",
        y = "Monthly average ozone (ppm)")
 
+arapahaoemod_plot
 
 
+##### JeffCO
 
+jeff_mod <- lm(monthly_ozone_avg_ppm ~ ev_reg, data = jefferson)
+
+print(summary(jeff_mod))
+
+jeffmod_plot <- ggplot(data = jefferson,
+                       aes(x = ev_reg,
+                           y = monthly_ozone_avg_ppm)) +
+  geom_point() +
+  geom_line(data = augment(jeff_mod),
+            aes(y = .fitted)) +
+  labs(x = "Monthly EV Registrations in Jefferson County",
+       y = "Monthly average ozone (ppm)")
+
+jeffmod_plot
+
+```
+Time gets lost in these simple linear models, so maybe building an interaction model with time and 
+
+
+```{r}
+
+intmod <- lm(monthly_ozone_avg_ppm ~ my_date + ev_reg_count, data = my_summary)
+
+print(summary(intmod))
+
+
+my_summary |> 
+  ggplot(aes(x = my_date,
+             y = monthly_ozone_avg_ppm,
+             color = ev_reg_count)) +
+  geom_point() +
+  geom_line(data = augment(intmod),
+            aes(y = .fitted,
+                color = ev_reg_count))
+
+
+# intmodplot <- ggplot(data = my_summary,
+#                      aes(x = my_date,
+#                          y = monthly_ozone_avg_ppm,
+#                          color = ev_reg_count)) +
+#   scale_color_continuous() +
+#   geom_point() +
+#   geom_line(data = augment(intmod),
+#             aes = (
+#                    
+#                    y = .fitted))
+# 
+# intmodplot
 
 
 
 ```
-
 
 
 
