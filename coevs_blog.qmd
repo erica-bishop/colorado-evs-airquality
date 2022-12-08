@@ -11,6 +11,10 @@ bibliography: references.bib
 
 Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
 
+Background info:
+
+\- health threshhold for ozone is 70 ppb (0.070 ppm)
+
 ## Data
 
 When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
@@ -19,10 +23,9 @@ When you click the **Render** button a document will be generated that includes 
 
 ### Exploration and preparation
 
-
 ## Analysis
 
-Describe analysis plan and justification. 
+Describe analysis plan and justification.
 
 ### Time series analysis
 
@@ -34,7 +37,7 @@ Interpret residuals, coefficients, standard error, p value
 
 ## Discusion
 
-Nothing to see here. 
+Nothing to see here.
 
 ## Next steps
 

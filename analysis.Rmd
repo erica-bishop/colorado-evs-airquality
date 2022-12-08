@@ -14,7 +14,6 @@ library(tidyverse)
 library(here)
 library(janitor)
 library(lubridate)
-#library(datapasta)
 library(zoo)
 library(ggpubr)
 library(gridExtra)
@@ -25,10 +24,6 @@ library(tsibble)
 library(webshot2)
 
 ```
-Background info:
-
-- health threshhold for ozone is 70 ppb (0.070 ppm)
-
 
 
 ```{r}
@@ -61,20 +56,21 @@ Air Quality data from the EPA's Air Data: https://www.epa.gov/outdoor-air-qualit
 ```{r}
 
 #read in raw daily AQI data
+#NOT USED IN THIS ANALYSIS
 
-daily_aqi_raw_10 <- read_csv(file.path(datadir, "daily_county_aqi", "daily_aqi_by_county_2010.csv"))
-daily_aqi_raw_11 <- read_csv(file.path(datadir, "daily_county_aqi", "daily_aqi_by_county_2011.csv"))
-daily_aqi_raw_12 <- read_csv(file.path(datadir, "daily_county_aqi", "daily_aqi_by_county_2012.csv"))
-daily_aqi_raw_13 <- read_csv(file.path(datadir, "daily_county_aqi", "daily_aqi_by_county_2013.csv"))
-daily_aqi_raw_14 <- read_csv(file.path(datadir, "daily_county_aqi", "daily_aqi_by_county_2014.csv"))
-daily_aqi_raw_15 <- read_csv(file.path(datadir, "daily_county_aqi", "daily_aqi_by_county_2015.csv"))
-daily_aqi_raw_16 <- read_csv(file.path(datadir, "daily_county_aqi", "daily_aqi_by_county_2016.csv"))
-daily_aqi_raw_17 <- read_csv(file.path(datadir, "daily_county_aqi", "daily_aqi_by_county_2017.csv"))
-daily_aqi_raw_18 <- read_csv(file.path(datadir, "daily_county_aqi", "daily_aqi_by_county_2018.csv"))
-daily_aqi_raw_19 <- read_csv(file.path(datadir, "daily_county_aqi", "daily_aqi_by_county_2019.csv"))
-daily_aqi_raw_20 <- read_csv(file.path(datadir, "daily_county_aqi", "daily_aqi_by_county_2020.csv"))
-daily_aqi_raw_21 <- read_csv(file.path(datadir, "daily_county_aqi", "daily_aqi_by_county_2021.csv"))
-daily_aqi_raw_22 <- read_csv(file.path(datadir, "daily_county_aqi", "daily_aqi_by_county_2022.csv"))
+# daily_aqi_raw_10 <- read_csv(file.path(datadir, "daily_county_aqi", "daily_aqi_by_county_2010.csv"))
+# daily_aqi_raw_11 <- read_csv(file.path(datadir, "daily_county_aqi", "daily_aqi_by_county_2011.csv"))
+# daily_aqi_raw_12 <- read_csv(file.path(datadir, "daily_county_aqi", "daily_aqi_by_county_2012.csv"))
+# daily_aqi_raw_13 <- read_csv(file.path(datadir, "daily_county_aqi", "daily_aqi_by_county_2013.csv"))
+# daily_aqi_raw_14 <- read_csv(file.path(datadir, "daily_county_aqi", "daily_aqi_by_county_2014.csv"))
+# daily_aqi_raw_15 <- read_csv(file.path(datadir, "daily_county_aqi", "daily_aqi_by_county_2015.csv"))
+# daily_aqi_raw_16 <- read_csv(file.path(datadir, "daily_county_aqi", "daily_aqi_by_county_2016.csv"))
+# daily_aqi_raw_17 <- read_csv(file.path(datadir, "daily_county_aqi", "daily_aqi_by_county_2017.csv"))
+# daily_aqi_raw_18 <- read_csv(file.path(datadir, "daily_county_aqi", "daily_aqi_by_county_2018.csv"))
+# daily_aqi_raw_19 <- read_csv(file.path(datadir, "daily_county_aqi", "daily_aqi_by_county_2019.csv"))
+# daily_aqi_raw_20 <- read_csv(file.path(datadir, "daily_county_aqi", "daily_aqi_by_county_2020.csv"))
+# daily_aqi_raw_21 <- read_csv(file.path(datadir, "daily_county_aqi", "daily_aqi_by_county_2021.csv"))
+# daily_aqi_raw_22 <- read_csv(file.path(datadir, "daily_county_aqi", "daily_aqi_by_county_2022.csv"))
 
 ```
 
@@ -88,25 +84,25 @@ filter_CO <- function(df) {
 }
 
 #run function on data frames:
-daqi_10_CO <- filter_CO(daily_aqi_raw_10)
-daqi_11_CO <- filter_CO(daily_aqi_raw_11)
-daqi_12_CO <- filter_CO(daily_aqi_raw_12)
-daqi_13_CO <- filter_CO(daily_aqi_raw_13)
-daqi_14_CO <- filter_CO(daily_aqi_raw_14)
-daqi_15_CO <- filter_CO(daily_aqi_raw_15)
-daqi_16_CO <- filter_CO(daily_aqi_raw_16)
-daqi_17_CO <- filter_CO(daily_aqi_raw_17)
-daqi_18_CO <- filter_CO(daily_aqi_raw_18)
-daqi_19_CO <- filter_CO(daily_aqi_raw_19)
-daqi_20_CO <- filter_CO(daily_aqi_raw_20)
-daqi_21_CO <- filter_CO(daily_aqi_raw_21)
-daqi_22_CO <- filter_CO(daily_aqi_raw_22)
-  
-#join using rbind
-daqi_CO <- rbind(daqi_10_CO, daqi_11_CO, daqi_12_CO, daqi_13_CO, daqi_14_CO, daqi_15_CO, daqi_16_CO, daqi_17_CO, daqi_18_CO, daqi_19_CO, daqi_20_CO, daqi_21_CO, daqi_22_CO)
-
-daqi_CO <- daqi_CO |> 
-  rename(date_local = date) #renaming in case joining to ozone data
+# daqi_10_CO <- filter_CO(daily_aqi_raw_10)
+# daqi_11_CO <- filter_CO(daily_aqi_raw_11)
+# daqi_12_CO <- filter_CO(daily_aqi_raw_12)
+# daqi_13_CO <- filter_CO(daily_aqi_raw_13)
+# daqi_14_CO <- filter_CO(daily_aqi_raw_14)
+# daqi_15_CO <- filter_CO(daily_aqi_raw_15)
+# daqi_16_CO <- filter_CO(daily_aqi_raw_16)
+# daqi_17_CO <- filter_CO(daily_aqi_raw_17)
+# daqi_18_CO <- filter_CO(daily_aqi_raw_18)
+# daqi_19_CO <- filter_CO(daily_aqi_raw_19)
+# daqi_20_CO <- filter_CO(daily_aqi_raw_20)
+# daqi_21_CO <- filter_CO(daily_aqi_raw_21)
+# daqi_22_CO <- filter_CO(daily_aqi_raw_22)
+#   
+# #join using rbind
+# daqi_CO <- rbind(daqi_10_CO, daqi_11_CO, daqi_12_CO, daqi_13_CO, daqi_14_CO, daqi_15_CO, daqi_16_CO, daqi_17_CO, daqi_18_CO, daqi_19_CO, daqi_20_CO, daqi_21_CO, daqi_22_CO)
+# 
+# daqi_CO <- daqi_CO |> 
+#   rename(date_local = date) #renaming in case joining to ozone data
 
 ```
 
@@ -149,10 +145,10 @@ dozo_CO <- rbind(dozo_10_CO, dozo_11_CO, dozo_12_CO, dozo_13_CO, dozo_14_CO, doz
 
 ```{r}
 #remove precursor datasets from memory to free up space
-# rm(dozo_10_CO, dozo_11_CO, dozo_12_CO, dozo_13_CO, dozo_14_CO, dozo_15_CO, dozo_16_CO, dozo_17_CO, dozo_18_CO, dozo_19_CO, dozo_20_CO, dozo_21_CO)
+rm(dozo_10_CO, dozo_11_CO, dozo_12_CO, dozo_13_CO, dozo_14_CO, dozo_15_CO, dozo_16_CO, dozo_17_CO, dozo_18_CO, dozo_19_CO, dozo_20_CO, dozo_21_CO)
 # rm(daqi_10_CO, daqi_11_CO, daqi_12_CO, daqi_13_CO, daqi_14_CO, daqi_15_CO, daqi_16_CO, daqi_17_CO, daqi_18_CO, daqi_19_CO, daqi_20_CO, daqi_21_CO, daqi_22_CO)
-# rm(daily_aqi_raw_10, daily_aqi_raw_11, daily_aqi_raw_12, daily_aqi_raw_13, daily_aqi_raw_14, daily_aqi_raw_15, daily_aqi_raw_16, daily_aqi_raw_17, daily_aqi_raw_18, daily_aqi_raw_19, daily_aqi_raw_20, daily_aqi_raw_21, daily_aqi_raw_22)
-#rm(daily_ozone_2010, daily_ozone_2011, daily_ozone_2012, daily_ozone_2013, daily_ozone_2014, daily_ozone_2015, daily_ozone_2016, daily_ozone_2017, daily_ozone_2018, daily_ozone_2019, daily_ozone_2020, daily_ozone_2021, daily_ozone_2022)
+rm(daily_aqi_raw_10, daily_aqi_raw_11, daily_aqi_raw_12, daily_aqi_raw_13, daily_aqi_raw_14, daily_aqi_raw_15, daily_aqi_raw_16, daily_aqi_raw_17, daily_aqi_raw_18, daily_aqi_raw_19, daily_aqi_raw_20, daily_aqi_raw_21, daily_aqi_raw_22)
+rm(daily_ozone_2010, daily_ozone_2011, daily_ozone_2012, daily_ozone_2013, daily_ozone_2014, daily_ozone_2015, daily_ozone_2016, daily_ozone_2017, daily_ozone_2018, daily_ozone_2019, daily_ozone_2020, daily_ozone_2021, daily_ozone_2022)
 
 ```
 
@@ -172,7 +168,7 @@ co_evs_counties <- co_evs_counties |>
   rename(date_local = registration_valid_date)
 
 #join ev and ozone data
-co_evs_ozone <- full_join(dozo_CO, co_evs_counties, by = "date_local")
+# co_evs_ozone <- full_join(dozo_CO, co_evs_counties, by = "date_local")
 #DON"T USE THAT DF ITS GARBAGE
 
 
@@ -250,16 +246,25 @@ Data exploration:
 ev_plot <- ggplot(data = my_summary,
        aes(x = my_date,
            y = ev_reg_count)) +
-  geom_line()
+  geom_line() +
+  labs(x = "Month",
+       y = "Monthly count of EV registrations",
+       title = "Time series of EV registrations in Colorado") +
+  theme_light()
+
+ggsave("evts.png", path = figdir)
 
 oz_plot <- ggplot(data = my_summary,
        aes(x = my_date,
            y = monthly_ozone_avg_ppm)) +
-  geom_line()
+  geom_line() +
+    labs(x = "Month",
+       y = "Monthly average ozone concentration (ppm)",
+       title = "Time series of ozone concentration in Colorado") +
+  theme_light()
 
+ggsave("ozts.png", path = figdir)
 
-
-ev_plot
 oz_plot
 
 oz_ev_plot <- ggplot(data = my_summary,
@@ -274,9 +279,15 @@ counties_plot <- ggplot(data = topcounties,
                         aes(x = ev_reg,
                             y = monthly_ozone_avg_ppm,
                             col = county)) +
-  geom_point()
+  geom_jitter() +
+  labs(x = "Monthly count of EV registrations",
+       y = "Monthly average ozone concentration (ppm)",
+       title = "Ozone concentration by EV registrations in five most populous Colorado counties") +
+  theme_light()
 
 counties_plot
+
+ggsave("countiesplot.png", path = figdir)
 
 ```
 
@@ -288,7 +299,7 @@ counties_plot
 
 ```{r}
 #investigate correlation
-cor(my_summary$ev_reg_count, my_summary$monthly_ozone_avg_ppm, use = "complete.obs")
+co_cor <- cor(my_summary$ev_reg_count, my_summary$monthly_ozone_avg_ppm, use = "complete.obs")
 #ver small negative correlation
 
 ```
@@ -300,21 +311,13 @@ To recover seasonality separately from the long run trend, we will use a classic
 $$D_t = S_t + T_t + R_t$$
 
 ```{r}
-# ozone_ts <- dozo_CO |> 
-#   select("x1st_max_value", "date_local") |> 
-#   as_tsibble(index = date_local, key = )
 
+#create a time series and run decomp on ozone 
 
 ozone_ts <- as_tibble(my_summary) |> 
   select("my_date", "monthly_ozone_avg_ppm") |> 
   mutate(my_date = yearmonth(my_date)) |> 
   as_tsibble()  #key = monthly_ozone_avg_ppm, index = my_date) #for some reason decomp doesn't work with these arguments specified
- 
-# esales <- arrow::read_feather("data/esales.feather")
-# esales %>%
-#   dplyr::select(date, sales_GWh = value) -> esales_tbl
-# esales_tbl %>% as_tsibble(index = date) -> elsales_tbl_ts
-
 
 ozone_decomp <- as_tsibble(ozone_ts) |> 
   model(
@@ -322,9 +325,13 @@ ozone_decomp <- as_tsibble(ozone_ts) |>
   ) |> 
   components() |> 
   autoplot() +
-  labs(title = "Classical additive decomposition of monthly ozone")
+  labs(title = "Classical additive decomposition of monthly ozone",
+       x = "month",
+       y = "ozone concentration")
 
-ozone_decomp
+ggsave("ozone_decomp.png", path = figdir)
+
+
 
 ```
 
@@ -333,6 +340,7 @@ From the above time series analysis, its clear that seasonal variations and even
 Take a look at a decomposition of ev registrations to see if there is any similar pattern, or perhaps we can 
 
 ```{r}
+#repeat time series and decomposition with ev data
 
 ev_ts <- as_tibble(my_summary) |> 
   select("my_date", "ev_reg_count") |> 
@@ -345,33 +353,13 @@ ev_decomp <- ev_ts |>
   ) |> 
   components() |> 
   autoplot() +
-  labs(title = "Classical additive decomposition of ev registrations")
+  labs(title = "Classical additive decomposition of ev registrations",
+       x = "month",
+       y = "EV registration count")
 
-ev_decomp
-
-```
-
-Run a time series decomposition with both?
-
-```{r}
-
-# ev_oz_ts <- left_join(ev_ts, ozone_ts, by = "my_date")
-# 
-# ev_oz_decomp <- ev_oz_ts |> 
-#   model(
-#     classical_decomposition(c(ev_reg_count, monthly_ozone_avg_ppm), type = "additive")
-#   ) |> 
-#   components() |> 
-#   autoplot() +
-#   labs(title = "Additive Decomp of EV registrations and ozone in CO")
-# 
-# 
-
+ggsave("ev_decomp.png", path = figdir)
 
 ```
-
-
-
 Now to examine the relationship between these variables:
 
 
@@ -381,19 +369,25 @@ $$\text{monthly_ozone_avg_ppm} = \beta_0 + \beta_1 \text{cum_evreg_since2010} + 
 ```{r}
 #regress ozone days on ev registration
 
-mod <- lm(monthly_ozone_avg_ppm ~ ev_reg_count, data = my_summary)
+mod <- lm(monthly_ozone_avg_ppm ~ ev_reg_count, data = my_summary) 
 
 print(summary(mod))
 
 #plot the model
-ggplot(data = my_summary,
+modplot <- ggplot(data = my_summary,
        aes(x = ev_reg_count,
            y = monthly_ozone_avg_ppm)) +
   geom_point() +
   geom_line(data = augment(mod),
             aes(y = .fitted)) +
   labs(x = "Monthly EV Registrations in Colorado",
-       y = "Monthly average ozone (ppm)")
+       y = "Monthly average ozone (ppm)") +
+  theme_light()
+
+ggsave("modplot.png", path = figdir)
+
+gt(tidy(mod))
+
 
 ```
 
@@ -438,13 +432,15 @@ adams_cor
 #weak positive
 
 #create a nice little output table:
-cor_table <- data.frame("County" = c("El Paso", "Denver", "Arapahoe", "Jefferson", "Adams"),
-                        "Correlation" = c(round(elpaso_cor, 4), round(denver_cor, 4), round(arapahoe_cor, 4), round(jeff_cor, 4), round(adams_cor, 4)))
+cor_table <- data.frame("Region" = c("Colorado State", "El Paso County", "Denver County", "Arapahoe County", "Jefferson County", "Adams County"),
+                        "Correlation" = c(round(co_cor, 4), round(elpaso_cor, 4), round(denver_cor, 4), round(arapahoe_cor, 4), round(jeff_cor, 4), round(adams_cor, 4)))
 
 cor_gt <- gt(cor_table) |> 
   tab_header("Pearson Correlation Coefficients")
 
-gtsave(cor_gt, "county_ev_cor_table.png", path = datadir)
+cor_gt
+
+gtsave(cor_gt, "evoz_cor_table.png", path = figdir)
 
 ```
 
@@ -518,56 +514,21 @@ intmod <- lm(monthly_ozone_avg_ppm ~ my_date + ev_reg_count, data = my_summary)
 print(summary(intmod))
 
 
-my_summary |> 
+intplot <- my_summary |> 
   ggplot(aes(x = my_date,
              y = monthly_ozone_avg_ppm,
              color = ev_reg_count)) +
   geom_point() +
-  geom_line(data = augment(intmod),
+  geom_smooth(data = augment(intmod),
             aes(y = .fitted,
-                color = ev_reg_count))
-
-
-# intmodplot <- ggplot(data = my_summary,
-#                      aes(x = my_date,
-#                          y = monthly_ozone_avg_ppm,
-#                          color = ev_reg_count)) +
-#   scale_color_continuous() +
-#   geom_point() +
-#   geom_line(data = augment(intmod),
-#             aes = (
-#                    
-#                    y = .fitted))
-# 
-# intmodplot
+                color = ev_reg_count,
+                se = F))
+intplot
 
 
 
 ```
-
-
-
-###
-
-IF there's nothing significant, try looking at the number of ozone action alert days to see if there's a correlation:
-https://docs.google.com/spreadsheets/d/1BHUei0iDaE2EvSIrD4KAN9xy9mQQWhLDAgZtA1iFSl4/edit#gid=1498430605 
-
-
-### Part 2: Test Hypothesis
-
-Null Hypothesis: beta_1 (slope) = 0 (no relationship between ozone and # of EVs)
-Alternate Hypothesis: beta_1 != 0 (or is negative?)
-
-```{r}
-
-
-
-
-
-
-
-
-```
+THis has resulted in nothing. Likely because in Colorado EVs are still just 0.64% of original vehicle registrations in colordao (including light and heavy duty), according to the EValuate Colorado Dashboard from the Colorado Energy Office: https://atlaspolicy.com/evaluateco/
 
 
 
